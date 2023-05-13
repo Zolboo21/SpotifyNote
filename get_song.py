@@ -1,20 +1,30 @@
+import os
 import spotipy
+import time
 from spotipy.oauth2 import SpotifyOAuth
+from dotenv import load_dotenv
+
+load_dotenv()
+
+client_id = os.environ.get('CLIENT_ID')
+client_secret = os.environ.get('CLIENT_SECRET')
 
 # Set up the Spotify API client
 scope = "user-read-playback-state"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id='21a006ab95cd4665b15a232271b04aba', client_secret="c1b12da2e6a44662bd38904efedf9ff2", redirect_uri="http://localhost:8080/callback", scope=scope))
-
-# Get the user's currently playing track
-current_track = sp.current_playback()
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id, client_secret=client_secret, redirect_uri="http://localhost:8080/callback", scope=scope))
 
 # Check if a track is currently playing
-if current_track is None:
-    print("No track is currently playing.")
-else:
-    # Get the name of the song and the artist
-    track_name = current_track['item']['name']
-    artist_name = current_track['item']['artists'][0]['name']
-
-    # Print the name of the song and artist to the terminal
-    print("Currently playing:", track_name, "by", artist_name)
+current_track = None
+while True:
+    # Get the currently playing track
+    track = sp.current_playback()
+    if track and track["item"]:
+        # Get the name of the song and artist
+        song_name = track["item"]["name"]
+        artist_name = track["item"]["artists"][0]["name"]
+        # Print the name of the song and artist if it has changed
+        if (song_name, artist_name) != current_track:
+            print("\nSong: {} - Artist: {}".format(song_name, artist_name))
+            current_track = (song_name, artist_name)
+    # Wait for a few seconds before checking again
+    time.sleep(5)
